@@ -1,77 +1,35 @@
 
-export const Uint32Array_ID = idof<Uint32Array>();
+import { BasicInflate } from "./Inflate";
 
-export function floodFill(x: u32, y: u32, color: u32, width: u32, height: u32, data: Uint32Array): u32 {
-	const index: u32 = x + y * width;
-	const oldc32 = unchecked(data[index]);
-	const stack: StaticArray<u32> = new StaticArray<u32>(width * height * 2 - 2);
+export const Uint8Array_ID = idof<Uint8Array>();
 
-	let stackIndex: u32 = 0;
-	let count: u32 = 0;
+let inflate: BasicInflate | null = null;
+let buffer: Uint8Array;
 
-	unchecked((stack[stackIndex++] = x));
-	unchecked((stack[stackIndex++] = y));
+export function initInflator(): void {
+	inflate = new BasicInflate();
+}
 
-	while (stackIndex > 0) {
-		const cy: u32 = unchecked(stack[--stackIndex]);
-		const cx: u32 = unchecked(stack[--stackIndex]);
-
-		const i: u32 = cx + cy * width;
-
-		data[i] = color;
-		count++;
-
-		let nx = cx + 0;
-		let ny = cy - 1;
-
-		if (nx >= 0 && ny >= 0 && nx < width && ny < height) {
-			const ni = nx + ny * width;
-
-			if (unchecked(data[ni]) === oldc32) {
-				unchecked((stack[stackIndex++] = nx));
-				unchecked((stack[stackIndex++] = ny));
-			}
-		}
-
-		// j = 1
-		nx = cx + 1;
-		ny = cy + 0;
-
-		if (nx >= 0 && ny >= 0 && nx < width && ny < height) {
-			const ni = nx + ny * width;
-
-			if (unchecked(data[ni]) === oldc32) {
-				unchecked((stack[stackIndex++] = nx));
-				unchecked((stack[stackIndex++] = ny));
-			}
-		}
-
-		// j = 2
-		nx = cx + 0;
-		ny = cy + 1;
-
-		if (nx >= 0 && ny >= 0 && nx < width && ny < height) {
-			const ni = nx + ny * width;
-
-			if (unchecked(data[ni]) === oldc32) {
-				unchecked((stack[stackIndex++] = nx));
-				unchecked((stack[stackIndex++] = ny));
-			}
-		}
-
-		// j = 3
-		nx = cx - 1;
-		ny = cy + 0;
-
-		if (nx >= 0 && ny >= 0 && nx < width && ny < height) {
-			const ni = nx + ny * width;
-
-			if (unchecked(data[ni]) === oldc32) {
-				unchecked((stack[stackIndex++] = nx));
-				unchecked((stack[stackIndex++] = ny));
-			}
-		}
+export function uploadBuffer(b: Uint8Array): void {
+	if(inflate === null) {
+		initInflator();
 	}
+	buffer = b;
+}
 
-	return count;
+export function decodePart(start: u32, len: u32, expected: u32): Uint8Array {
+	const target = new Uint8Array(expected);
+	const source = Uint8Array.wrap(buffer.buffer, start, len);
+
+	inflate!.targetBuffer(target);
+	inflate!.push(source);
+
+	return target;
+}
+
+export function getErrorCode(): i32 {
+	return inflate!._errorCode;
+}
+export function getStatus(): i32 {
+	return inflate!._state;
 }
