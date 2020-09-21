@@ -1,6 +1,6 @@
 import {exports} from "./loader.js";
 
-const buff = new Uint8Array([120, 218, 99, 96, 32, 15, 252, 135, 98, 122, 3, 176, 189, 48, 48, 80, 246, 82, 201, 254, 255, 196, 98, 92, 128, 4, 51, 8, 250, 133, 150, 96, 160, 236, 69, 15, 167, 129, 48, 123, 176, 248, 155, 152, 244, 133, 77, 61, 182, 180, 70, 170, 60, 181, 216, 196, 184, 147, 218, 246, 145, 18, 70, 244, 244, 43, 53, 236, 198, 22, 111, 132, 196, 136, 77, 15, 195, 37, 127, 15, 214, 178, 141, 220, 186, 132, 10, 24, 6, 0, 171, 53, 215, 97])
+const buff = new Uint8Array([120, 218, 99, 96, 96, 248, 127, 116, 199, 130, 255, 12, 16, 240, 159, 9, 11, 128, 202, 49, 192, 184, 140, 80, 192, 128, 202, 133, 8, 32, 113, 193, 2, 88, 249, 32, 211, 80, 248, 3, 77, 163, 185, 7, 143, 251, 209, 253, 139, 17, 30, 24, 225, 133, 2, 0, 63, 119, 6, 159])
 const size = 2108;
 
 fetch("./build/untouched.wasm")
@@ -12,12 +12,21 @@ fetch("./build/untouched.wasm")
 			decodePart,
 			getStatus,
 			getErrorCode,
+			parseColorMapped,
 			Uint8Array_ID,
+			__getUint8ClampedArrayView,
 			__allocArray,
 			__getArray,
 			__retain,
 			__release,
 		} = exports;
+
+		const decodeImage = ({data, width, height, tableSize, hasAlpha}) => {
+			const arr = __allocArray(Uint8Array_ID, data);
+			const ptr = parseColorMapped(arr, width | 0, height | 0, tableSize | 0 , !!hasAlpha);
+
+			return  __getUint8ClampedArrayView(ptr);
+		}
 
         const Inflate = (buff, size) =>{
 			const arr = __allocArray(Uint8Array_ID, buff);
@@ -32,9 +41,13 @@ fetch("./build/untouched.wasm")
 
 		console.log("In", buff);
 
-		const res = Inflate(buff, size);
-		const status = getStatus();
-		const error = getErrorCode();
+		const res = decodeImage({
+			data: buff,
+			width: 16,
+			height: 22,
+			hasAlpha: true,
+			tableSize:3
+		});
 
-		console.log(res, status, error);
+		console.log(res);
     })

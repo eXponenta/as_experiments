@@ -2,7 +2,7 @@ const WINDOW_SIZE: u32 = 32768;
 const WINDOW_SHIFT_POSITION: u32 = 65536;
 const MAX_WINDOW_SIZE: u32 = WINDOW_SHIFT_POSITION + 258; /* plus max copy len */
 
-const enum ERROR_CODES {
+export const enum ERROR_CODES {
 	NONE = 0,
 	ZLIB_UNKNOW_HEADER = 1,
 	ZLIB_INVALID_FCHECK = 2,
@@ -13,7 +13,7 @@ const enum ERROR_CODES {
 	ZLIB_UNVALID_ENCODING = 6,
 }
 
-const enum InflateState {
+export const enum InflateState {
 	INIT = 0,
 	BLOCK_0 = 1,
 	BLOCK_1 = 2,
@@ -22,6 +22,7 @@ const enum InflateState {
 	DONE = 5,
 	ERROR = 6,
 	VERIFY_HEADER = 7,
+	CLOSED = 8
 }
 
 @unmanaged
@@ -61,6 +62,9 @@ var fixedLiteralTable: HuffmanTable;
 var areTablesInitialized: boolean = false;
 
 function initializeTables(): void {
+	if(areTablesInitialized) return;
+	areTablesInitialized = true;
+
 	distanceCodes = new Uint16Array(30);
 	distanceExtraBits = new Uint8Array(30);
 	let code: u32 = 1;
@@ -159,15 +163,7 @@ export class BasicInflate {
 	private _pos: u32 = 0;
 
 	constructor() {
-		if (!areTablesInitialized) {
-			initializeTables();
-			areTablesInitialized = true;
-		}
-	}
-
-	public targetBuffer(target: Uint8Array): void {
-		this._pos = 0;
-		this._target = target;
+		initializeTables();
 	}
 
 	public onData(buff: Uint8Array): void {
@@ -203,7 +199,17 @@ export class BasicInflate {
 		return 2;
 	}
 
+	public init(target: Uint8Array, checkHeader: bool): void {
+		this.close();
+
+		this._target = target;
+		this._state = checkHeader ? InflateState.VERIFY_HEADER : InflateState.INIT;
+		this._pos = 0;
+	}
+
 	public push(data: Uint8Array): void {
+		assert(this._state !== InflateState.CLOSED, "init is required after close!");
+
 		if (<u32>this._buffer.length < this._bufferSize + data.length) {
 			var newBuffer = new Uint8Array(this._bufferSize + data.length);
 			if (this._buffer) {
@@ -254,7 +260,7 @@ export class BasicInflate {
 						this._state = InflateState.INIT;
 					} else if (processed === 0) {
 						incomplete = true;
-					} else {
+					} else if(this._errorCode !== 0) {
 						this._state = InflateState.ERROR;
 					}
 					break;
@@ -279,6 +285,16 @@ export class BasicInflate {
 			this._bufferSize = 0;
 		}
 	}
+
+	public close(): void {
+		this._state = InflateState.CLOSED;
+		this._pos = 0;
+		this._errorCode = ERROR_CODES.NONE;
+		this._bufferPosition = 0;
+		this._bufferSize = 0;
+		this._windowPosition = 0;
+	}
+
 	private _decodeInitState(): bool {
 		if (this._isFinalBlock) {
 			this._state = InflateState.DONE;
@@ -635,4 +651,14 @@ export class BasicInflate {
 		this._windowPosition = pos;
 		return false;
 	}
+}
+
+let inflator: BasicInflate;
+
+export function getInstance(): BasicInflate {
+	if(inflator !== null)
+		return inflator;
+
+	inflator = new BasicInflate();
+	return inflator;
 }
