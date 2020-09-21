@@ -4,7 +4,13 @@ function roundToMultipleOfFour(x: u32): u32 {
 	return (x + 3) & ~0x3;
 }
 
-export function parseColorMapped(data: Uint8Array, width: u32, height: u32, tableSize: u32, hasAlpha: bool): Uint8Array {
+export function parseColorMapped(
+	data: Uint8Array,
+	width: u32,
+	height: u32,
+	tableSize: u32,
+	hasAlpha: bool
+): Uint8Array {
 	const padding: u32 = roundToMultipleOfFour(width) - width;
 	const colorTableLength: u32 = tableSize + 1;
 	const colorTableEntrySize: u32 = hasAlpha ? 4 : 3;
@@ -14,7 +20,7 @@ export function parseColorMapped(data: Uint8Array, width: u32, height: u32, tabl
 
 	const inflator: BasicInflate = getInstance();
 
-	inflator.init(bytes,true);
+	inflator.init(bytes, true);
 	inflator.push(data);
 
 	assert(
@@ -30,13 +36,13 @@ export function parseColorMapped(data: Uint8Array, width: u32, height: u32, tabl
 
 	for (var y: u32 = 0; y < height; y++) {
 		for (var x: u32 = 0; x < width; x++) {
-			offset = <u32>unchecked(bytes[p++]) * colorTableEntrySize;
+			offset = u32(unchecked(bytes[p++])) * colorTableEntrySize;
 
 			view[i++] =
-				((hasAlpha ? <u32>unchecked(bytes[offset + 3]) : 0xff) << 24) |
-				((<u32>unchecked(bytes[offset + 2])) << 16) |
-				((<u32>unchecked(bytes[offset + 1])) << 8) |
-				(<u32>unchecked(bytes[offset + 0])) >>> 0;
+				((hasAlpha ? u32(unchecked(bytes[offset + 3])) : 0xff) << 24) |
+				(u32(unchecked(bytes[offset + 2])) << 16) |
+				(u32(unchecked(bytes[offset + 1])) << 8) |
+				(u32(unchecked(bytes[offset + 0])) >>> 0);
 		}
 		p += padding;
 	}
@@ -48,13 +54,12 @@ export function parseColorMapped(data: Uint8Array, width: u32, height: u32, tabl
  * Returns a Uint8ClampedArray of RGBA values.
  */
 export function parse24BPP(data: Uint8Array, width: u32, height: u32, tableSize: u32, hasAlpha: bool): Uint8Array {
-
 	// Even without alpha, 24BPP is stored as 4 bytes, probably for alignment reasons.
 	const dataSize = height * width * 4;
 	const bytes = new Uint8Array(dataSize);
 	const inflator: BasicInflate = getInstance();
 
-	inflator.init(bytes,true);
+	inflator.init(bytes, true);
 	inflator.push(data);
 
 	assert(
@@ -68,19 +73,18 @@ export function parse24BPP(data: Uint8Array, width: u32, height: u32, tableSize:
 	// in => PMA ARGB, out => NPMA RGBA
 	// ?
 	// Unpremultiply
-	for (let i: u32 = 0, l = <u32>view.length; i < l; i ++) {
+	for (let i: u32 = 0, l = <u32>view.length; i < l; i++) {
+		let c: u32 = unchecked(view[i]);
+		let a: u8 = u8(c); // A
+		let factor: f32 = a ? 0xff / f32(a) : 1;
 
-	  let c:u32 = unchecked(view[i]);
-	  let a:u8 = <u8>(c & 0xff); // A
-	  let factor: f32 = a ? 0xFF / <f32>a : 1;
+		let b: f32 = f32((c >> 24) & 0xff) * factor; // B
+		let g: f32 = f32((c >> 16) & 0xff) * factor; // G
+		let r: f32 = f32((c >> 8) & 0xff) * factor; // R
 
-	  let b:f32 = (<u8>(c >> 24)) * factor; // B
-	  let g:f32 = (<u8>(c >> 16)) * factor; // G
-	  let r:f32 = (<u8>(c >> 8 )) * factor; // R
-
-	  unchecked(view[i] = (<u8>a << 24 | <u8>b << 16 | <u8>g << 8 | <u8>r));
+		unchecked((view[i] = ((<u8>a) << 24) | ((<u8>b) << 16) | ((<u8>g) << 8) | (<u8>r)));
 	}
 
 	//assert (p * 4 === dataSize, "We should be at the end of the data buffer now.");
 	return bytes;
-  }
+}

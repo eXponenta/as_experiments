@@ -89,12 +89,12 @@ function initializeTables(): void {
 	lengthExtraBits = new Uint8Array(29);
 
 	code = 3;
-	for (let i = 0, j = 0; i < 29; ++i) {
+	for (let i:u32 = 0, j:u32 = 0; i < 29; ++i) {
 		lengthCodes[i] = code - (i === 28 ? 1 : 0);
 
 		j += i > 4 ? 1 : 0;
 
-		let bit = ~~(((j / 4) | 0) % 6);
+		let bit = ~~((j / 4) % 6);
 
 		lengthExtraBits[i] = bit;
 		code += 1 << bit;
