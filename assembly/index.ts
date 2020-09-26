@@ -43,6 +43,9 @@ export function getStatus(): i32 {
 export function parse24BPP_P(point: u32, len: u32, width: u32, height: u32, tableSize: u32, hasAlpha: bool): Uint8Array
 {
 	const sub = buffer.subarray(point, point + len);
+
+
+	trace("Run p24BP (start byte, end byte)", 2, <f64>sub[0], <f64>sub[sub.length - 1]);
 	return parse24BPP(sub, width, height, tableSize, hasAlpha);
 }
 
@@ -52,6 +55,8 @@ export function parse24BPP_P(point: u32, len: u32, width: u32, height: u32, tabl
 export function parseColorMapped_P(point: u32, len: u32, width: u32, height: u32, tableSize: u32, hasAlpha: bool): Uint8Array
 {
 	const sub = buffer.subarray(point, point + len);
+
+	trace("Run Color Mapped Decoder (start byte, end byte)", 2, <f64>sub[0], <f64>sub[sub.length - 1]);
 	return parseColorMapped(sub, width, height, tableSize, hasAlpha);
 }
 

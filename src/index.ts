@@ -24,30 +24,21 @@ export interface IModule {
 	parseColorMapped_P(opt: IColorMapedOptions, botp: IBindingOptions): Uint8ClampedArray;
 }
 
-function bindExports(exports: typeof ASModule & AS.ASUtil): IModule {
+function bindExports(e: typeof ASModule & AS.ASUtil): IModule {
 	let mainBufferPtr = -1;
-
-	const {
-		__allocArray,
-		__release,
-		__getUint8ClampedArray,
-		__getUint8ClampedArrayView,
-		parse24BPP_P: p24,
-		parseColorMapped_P: pCM,
-		Uint8Array_ID,
-		uploadBuffer
-	} = exports;
 
 	const ptrs = [];
 
 	return {
 		uploadBuffer(buffer: Uint8Array): number {
-			mainBufferPtr = __allocArray(Uint8Array_ID, buffer);
-			uploadBuffer(mainBufferPtr);
+			mainBufferPtr = e.__allocArray(e.Uint8Array_ID, buffer);
+			e.uploadBuffer(mainBufferPtr);
 			return mainBufferPtr;
 		},
-		parse24BPP_P(opt: IImageOptions, {useView = false}: IBindingOptions = null): Uint8ClampedArray
+		parse24BPP_P(opt: IImageOptions, bopt: IBindingOptions = null): Uint8ClampedArray
 		{
+			bopt = Object.assign(bopt || {}, {useView : false});
+
 			if(mainBufferPtr === -1) {
 				throw `Buffer should be uploaded before decoding`;
 			}
@@ -60,20 +51,22 @@ function bindExports(exports: typeof ASModule & AS.ASUtil): IModule {
 				throw `Invalid lenght ${opt.length}`
 			}
 
-			const ptr = p24(opt.offset | 0, opt.length | 0, opt.width | 0, opt.length | 0, 0, true);
+			const ptr = e.parse24BPP_P(opt.offset | 0, opt.length | 0, opt.width | 0, opt.length | 0, 0, true);
 
-			if( useView ) {
+			if( bopt.useView ) {
 				ptrs.push(ptr);
-				return __getUint8ClampedArrayView(ptr);
+				return e.__getUint8ClampedArrayView(ptr);
 			}
 
-			const arr = __getUint8ClampedArray(ptr);
-			__release(ptr);
+			const arr = e.__getUint8ClampedArray(ptr);
+			e.__release(ptr);
 
 			return arr;
 		},
-		parseColorMapped_P(opt: IColorMapedOptions, {useView = false}: IBindingOptions = null): Uint8ClampedArray
+		parseColorMapped_P(opt: IColorMapedOptions, bopt: IBindingOptions = null): Uint8ClampedArray
 		{
+			bopt = Object.assign(bopt || {}, {useView : false});
+
 			if(mainBufferPtr === -1) {
 				throw `Buffer should be uploaded before decoding`;
 			}
@@ -90,24 +83,24 @@ function bindExports(exports: typeof ASModule & AS.ASUtil): IModule {
 				throw `Invalid table size: ${opt.tableSize}`;
 			}
 
-			const ptr = pCM(opt.offset | 0, opt.length | 0, opt.width | 0, opt.length | 0, opt.tableSize | 0, !!opt.hasAlpha);
+			const ptr = e.parseColorMapped_P(opt.offset | 0, opt.length | 0, opt.width | 0, opt.length | 0, opt.tableSize | 0, !!opt.hasAlpha);
 
-			if( useView ) {
+			if( bopt.useView ) {
 				ptrs.push(ptr);
-				return __getUint8ClampedArrayView(ptr);
+				return e.__getUint8ClampedArrayView(ptr);
 			}
 
-			const arr = __getUint8ClampedArray(ptr);
-			__release(ptr);
+			const arr = e.__getUint8ClampedArray(ptr);
+			e.__release(ptr);
 
 			return arr;
 		},
 		dispose() {
 			if(mainBufferPtr > -1) {
-				__release(mainBufferPtr);
+				e.__release(mainBufferPtr);
 			}
 
-			for(const p of ptrs) __release(p);
+			for(const p of ptrs) e.__release(p);
 
 			mainBufferPtr = -1;
 			ptrs.length = 0;
@@ -123,5 +116,5 @@ export function loadModule(urlOrArray: string | ArrayBuffer): Promise<IModule> {
 
 	return f
 		.then(buff => AS.instantiate<typeof ASModule>(buff))
-		.then(({exports}) => bindExports(exports))
+		.then((m) => bindExports(m.exports))
 }

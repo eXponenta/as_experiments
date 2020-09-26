@@ -2,7 +2,9 @@
   "name": "as_runtime",
   "version": "1.0.0",
   "description": "Toolset fo AwayFL",
-  "main": "index.js",
+  "main": "./lib/index.js",
+  "module": "./lib/index.js",
+  "types": "./lib/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "asbuild:untouched": "asc assembly/index.ts --target debug",

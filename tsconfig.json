@@ -1,0 +1,18 @@
+{
+	"compilerOptions": {
+		"target": "ES5",
+		"lib": ["DOM", "ESNext"],
+		"removeComments": true,
+		"preserveConstEnums": true,
+		"outDir": "./lib/",
+		"module": "ES6",
+		"sourceMap": false,
+		"moduleResolution": "Node",
+		"declaration": true
+	},
+	"exclude": [
+		"assembly",
+		"build",
+		"lib"
+	]
+}

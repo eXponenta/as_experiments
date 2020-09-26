@@ -232,7 +232,7 @@ export class BasicInflate {
 				}
 			}
 
-			trace("Jump state:", 2, <f64>this._state, <f64> lastPosition);
+			//trace("Jump state:", 2, <f64>this._state, <f64> lastPosition);
 
 			switch (this._state) {
 				case InflateState.BLOCK_0:
@@ -558,7 +558,7 @@ export class BasicInflate {
 		let i: u32, j: u32, sym: u32;
 		let len: u32, lenBits: u32, dist: u32, distBits: u32;
 
-		trace("Copy state",1, <f64>copyState.state);
+		//trace("Copy state",1, <f64>copyState.state);
 
 		if (copyState.state !== 0) {
 			// continuing len/distance operation
@@ -601,7 +601,7 @@ export class BasicInflate {
 
 		do {
 			sym = this._readCode(literalTable!);
-			trace("Code:", 1, <f64>sym);
+			//trace("Code:", 1, <f64>sym);
 
 			if (sym < 0) {
 				this._windowPosition = pos;
