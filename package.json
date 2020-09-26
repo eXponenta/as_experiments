@@ -6,8 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "asbuild:untouched": "asc assembly/index.ts --target debug",
-    "asbuild:optimized": "asc assembly/index.ts --target release -O3 --noAssert",
-    "asbuild": "npm run asbuild:untouched && npm run asbuild:optimized"
+	"asbuild:optimized": "asc assembly/index.ts --target release -O3 --noAssert",
+	"types":"asc assembly/index.ts -d ./lib/types.d.ts",
+    "asbuild": "npm run asbuild:untouched && npm run asbuild:optimized && npm run types"
   },
   "author": "eXponenta",
   "license": "ISC",

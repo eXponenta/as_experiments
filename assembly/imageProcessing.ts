@@ -82,7 +82,13 @@ export function parse24BPP(data: Uint8Array, width: u32, height: u32, tableSize:
 		let g: f32 = f32((c >> 16) & 0xff) * factor; // G
 		let r: f32 = f32((c >> 8) & 0xff) * factor; // R
 
-		unchecked((view[i] = ((<u8>a) << 24) | ((<u8>b) << 16) | ((<u8>g) << 8) | (<u8>r)));
+		unchecked(
+			(view[i] =
+					(<u32>(<u8>a)) << 24 |
+					(<u32>(<u8>b)) << 16 |
+					(<u32>(<u8>g)) <<  8 |
+					(<u32>(<u8>r)) <<  0)
+		);
 	}
 
 	//assert (p * 4 === dataSize, "We should be at the end of the data buffer now.");
